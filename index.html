@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audio Recorder</title>
+  <style>
+    #recorder {
+      width: 300px;
+      height: 100px;
+      background-color: #f0f0f0;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="recorder">
+    <button id="start-btn">Start</button>
+    <button id="stop-btn" disabled>Stop</button>
+    <button id="download-btn" disabled>Download</button>
+    <audio id="audio" controls></audio>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const audio = document.getElementById('audio');
+
+    startBtn.addEventListener('click', startRecording);
+
+
+    stopBtn.addEventListener('click', stopRecording);
+
+  
+    downloadBtn.addEventListener('click', downloadRecording);
+
+    let mediaRecorder;
+    let recordedBlobs;
+
+    function startRecording() {
+     
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          recordedBlobs = [];
+
+          mediaRecorder.addEventListener('dataavailable', event => {
+            if (event.data && event.data.size > 0) {
+              recordedBlobs.push(event.data);
+            }
+          });
+
+          mediaRecorder.addEventListener('stop', () => {
+            const audioBlob = new Blob(recordedBlobs, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audio.src = audioUrl;
+          });
+
+          mediaRecorder.start();
+        })
+        .catch(error => {
+          console.error('Error starting recording:', error);
+        });
+
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+    }
+
+    function stopRecording() {
+    
+      mediaRecorder.stop();
+
+      stopBtn.disabled = true;
+      downloadBtn.disabled = false;
+    }
+
+    function downloadRecording() {
+      
+      const blob = new Blob(recordedBlobs, { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'aufnahme.wav';
+      a.click();
+    }
+  </script>
+</body>
+</html>
